@@ -78,7 +78,10 @@ department.cdepcode as 销售部门编码,
 cdepname as 销售部门,
 person.cpersoncode as 业务员编码,
 cpersonname as 业务员,
-ddate as 单据日期
+ddate as 单据日期,
+cexch_name as 币种,
+iexchrate as 汇率,
+itaxrate as 税率
 from so_somain somain
 left join saletype saletype on somain.cstcode = saletype.cstcode
 left join customer customer on somain.ccuscode = customer.ccuscode
@@ -110,14 +113,30 @@ left join person person on somain.cpersoncode = person.cpersoncode";
     {
       string sql = @"select 
 convert(bit,1) as 选择,
+ID,
 autoid,
-csocode 销售订单编号,
+sodetail.csocode 销售订单编号,
 inv.cinvcode 存货编码,
 inv.cinvname 存货,
+inv.cInvStd 规格型号,
+unit.ccomunitcode 主计量单位编码,
+unit.ccomunitname 主计量单位,
 dpredate 预发货日期,
-iquantity 数量
+iquantity 数量,
+iquotedprice 报价,
+itaxunitprice 原币含税单价,
+iunitprice 原币无税单价,
+imoney 原币无税金额,
+itax 原币税额,
+isum 原币价税合计,
+inatunitprice 本币无税单价,
+inatmoney 本币无税金额,
+inattax 本币税额,
+inatsum 本币价税合计,
+sodetail.itaxrate 税率
 from so_sodetails sodetail
 left join inventory inv on sodetail.cinvcode = inv.cinvcode
+left join computationunit unit on inv.ccomunitcode = unit.ccomunitcode
 where csocode = '{0}'";
       sql = string.Format(sql, code);
       DataTable table = this.connection.Query(sql);
