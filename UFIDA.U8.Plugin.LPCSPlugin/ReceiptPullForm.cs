@@ -8,6 +8,7 @@ using System.Text;
 using System.Windows.Forms;
 using UFIDA.U8.Plugin.LPCSPlugin.DB;
 using UFIDA.U8.UAP.UI.Runtime.Model;
+using UFIDA.U8.Plugin.LPCSPlugin.DL;
 
 namespace UFIDA.U8.Plugin.LPCSPlugin
 {
@@ -27,6 +28,7 @@ namespace UFIDA.U8.Plugin.LPCSPlugin
     private Business businessBody;
 
     private Connection connection;
+    private DALU8Exch dalExch;
     //public ReceiptPullForm(ConnectionMediatorBase mediator,VoucherProxy voucherProxy)
     //{
     //  if (mediator == null)
@@ -51,6 +53,8 @@ namespace UFIDA.U8.Plugin.LPCSPlugin
       this.voucherProxy = voucherProxy;
       this.businessHeader = this.voucherProxy.Businesses[this.entityHeaderID];
       this.businessBody = this.voucherProxy.Businesses[this.entityBodyID];
+
+      this.dalExch = new DALU8Exch(this.connectionString);
     }
 
     ///// <summary>
@@ -81,7 +85,8 @@ cpersonname as 业务员,
 ddate as 单据日期,
 cexch_name as 币种,
 iexchrate as 汇率,
-itaxrate as 税率
+itaxrate as 税率,
+convert(nchar,convert(money,ufts),2) as ufts
 from so_somain somain
 left join saletype saletype on somain.cstcode = saletype.cstcode
 left join customer customer on somain.ccuscode = customer.ccuscode
@@ -115,7 +120,7 @@ left join person person on somain.cpersoncode = person.cpersoncode";
 convert(bit,1) as 选择,
 ID,
 autoid,
-sodetail.csocode 销售订单编号,
+sodetail.csocode 销售订单号,
 inv.cinvcode 存货编码,
 inv.cinvname 存货,
 inv.cInvStd 规格型号,
@@ -288,7 +293,7 @@ where csocode = '{0}'";
       {
         DataRow dr = tempDt.Rows[i];
         //获取所有子表AUTOID
-        string ID = dr["csocode"].ToString();
+        string ID = dr["销售订单号"].ToString();
         //string sql = "select ID from pu_appVouch id= '" + ID + "'";
         if (!idS.Contains(ID))
           idS.Add(ID);
@@ -298,7 +303,7 @@ where csocode = '{0}'";
       for (int i = 0; i < dtHeader.Rows.Count; i++)
       {
         DataRow dr = dtHeader.Rows[i];
-        string ID = dr["csocode"].ToString();
+        string ID = dr["销售订单号"].ToString();
 
         if (idS.Contains(ID))
         {
@@ -314,66 +319,88 @@ where csocode = '{0}'";
         }
       }
 
-      //this.businessBody.Clear();
-      //for (int i = 0; i < tempDt.Rows.Count; i++)
-      //{
-      //  DataRow row = tempDt.Rows[i];
-      //  object obj = tempDt.Rows[i]["选择"];
-      //  bool ifSelected = false;
-      //  if (obj != null && obj != System.DBNull.Value)
-      //    ifSelected = Convert.ToBoolean(obj);
-      //  if (ifSelected == true)
-      //  {
-      //    string cPurAppCode = row["请购单编码"].ToString();
-      //    string cPersonCode = row["业务员编码"].ToString();
-      //    string cPersonName = this.dalPerson.getNameByCode(cPersonCode);
-      //    string appVouchAutoID = row["autoID"].ToString();
-      //    string cInvCode = this.dalPurAppVoucher.getInvCodeByAutoID(appVouchAutoID);
-      //    string cInvName = this.dalInventory.getInventoryNameByInventoryCode(cInvCode);
-      //    string cInvStd = this.dalInventory.getInvStdByInvCode(cInvCode);
-      //    float iQuantity = Convert.ToSingle(row["数量"].ToString());//this.dalPurAppVoucher.getQuantityByAutoID(appVouchAutoID);
-      //    float iNum = Convert.ToSingle(row["件数"].ToString());//this.dalPurAppVoucher.getNumByAutoID(appVouchAutoID);
-      //    //税率
-      //    float fTaxRate = Convert.ToSingle(row["税率"].ToString());
-      //    string cComUnitCode = this.dalInventory.getComUnitCodeByInventoryCode(cInvCode);
-      //    string cComUnitName = this.dalInventory.getComputationUnitNameByInventoryCode(cInvCode);
-      //    float iOriCost = this.dalPurAppVoucher.getOriCostByAutoID(appVouchAutoID);
-      //    float iOriSum = this.dalPurAppVoucher.getOriSumByAutoID(appVouchAutoID);
-      //    DateTime dRequireDate = this.dalPurAppVoucher.getRequireDateByAutoID(appVouchAutoID);
-      //    string cBusType = row["业务类型"].ToString();
+      DataRow firstHeaderRow = null;
 
-      //    //换算率
-      //    string fExchRate = row["换算率"].ToString();
-      //    //自由项
-      //    string cFree1 = row["材质"].ToString();
-      //    string cFree2 = row["状态"].ToString();
-      //    //备注
-      //    string cRemark = row["备注"].ToString();
-      //    this.businessBody.AddRow();
-      //    string currentPKValue = this.businessBody.CurrentPKValue;
+      foreach(DataRow row in dtHeader.Rows)
+      {
+        bool isSelect = Convert.ToBoolean(row["选择"]);
+        if (isSelect)
+        {
+          firstHeaderRow = row;
+          break;
+        }
+      }
 
-      //    this.businessBody.Rows[currentPKValue].Cells["cPurAppCode"].Value = cPurAppCode;
-      //    this.businessBody.Rows[currentPKValue].Cells["cPersonCode"].Value = cPersonCode;
-      //    this.businessBody.Rows[currentPKValue].Cells["cPersonName"].Value = cPersonName;
-      //    this.businessBody.Rows[currentPKValue].Cells["appVouchAutoID"].Value = appVouchAutoID;
-      //    this.businessBody.Rows[currentPKValue].Cells["cInvCode"].Value = cInvCode;
-      //    this.businessBody.Rows[currentPKValue].Cells["cInvName"].Value = cInvName;
-      //    this.businessBody.Rows[currentPKValue].Cells["cInvStd"].Value = cInvStd;
-      //    this.businessBody.Rows[currentPKValue].Cells["fQuantity"].Value = iQuantity.ToString();
-      //    this.businessBody.Rows[currentPKValue].Cells["fNum"].Value = iNum.ToString();
-      //    this.businessBody.Rows[currentPKValue].Cells["fTaxRate"].Value = fTaxRate.ToString();
-      //    this.businessBody.Rows[currentPKValue].Cells["cComUnitCode"].Value = cComUnitCode;
-      //    this.businessBody.Rows[currentPKValue].Cells["cComUnitName"].Value = cComUnitName;
-      //    this.businessBody.Rows[currentPKValue].Cells["iOriCost"].Value = iOriCost.ToString();
-      //    this.businessBody.Rows[currentPKValue].Cells["iOriSum"].Value = iOriSum.ToString();
-      //    this.businessBody.Rows[currentPKValue].Cells["dRequireDate"].Value = dRequireDate.ToString("yyyy-MM-dd");
-      //    this.businessBody.Rows[currentPKValue].Cells["fExchRate"].Value = fExchRate.ToString();
-      //    this.businessBody.Rows[currentPKValue].Cells["cFree1"].Value = cFree1;
-      //    this.businessBody.Rows[currentPKValue].Cells["cFree2"].Value = cFree2;
-      //    this.businessBody.Rows[currentPKValue].Cells["cBusType"].Value = cBusType;
-      //    this.businessBody.Rows[currentPKValue].Cells["cRemark"].Value = cRemark;
-      //  }
-      //}
+      if (firstHeaderRow == null)
+        return;
+
+      //设置表头数据
+      string cCode1 = "001";
+      string cCurrencyName = firstHeaderRow["币种"].ToString();
+      string cCurrencyCode = this.dalExch.getCodeByName(cCurrencyName);
+      string iExchRate = firstHeaderRow["汇率"].ToString();
+      string iTaxRate = firstHeaderRow["税率"].ToString();
+
+      this.businessHeader.Cells["cCode"].Value = cCode1;
+      this.businessHeader.Cells["cExchCode"].Value = cCurrencyCode;
+      this.businessHeader.Cells["cexch_name"].Value = cCurrencyName;
+      this.businessHeader.Cells["nFlat"].Value = iExchRate;
+      this.businessHeader.Cells["iTaxRate"].Value = iTaxRate;
+
+      this.businessBody.Clear();
+      for (int i = 0; i < tempDt.Rows.Count; i++)
+      {
+        DataRow row = tempDt.Rows[i];
+        object obj = tempDt.Rows[i]["选择"];
+        bool ifSelected = false;
+        if (obj != null && obj != System.DBNull.Value)
+          ifSelected = Convert.ToBoolean(obj);
+        if (ifSelected == true)
+        {
+          string cInvCode = row["存货编码"].ToString();
+          string cInvName = row["存货"].ToString();
+          float fQuantity = Convert.ToSingle(row["数量"].ToString());
+          string cSoCode = row["销售订单号"].ToString();
+          string cSoID = row["ID"].ToString();
+          string cSoAutoID = row["autoid"].ToString();
+          string cInvStd = row["规格型号"].ToString();
+          string cComUnitCode = row["主计量单位编码"].ToString();
+          string cComUnitName = row["主计量单位"].ToString();
+          string iQuotedPrice = row["报价"].ToString();
+          float iTaxUnitPrice = Convert.ToSingle(row["原币含税单价"].ToString());
+          string iUnitPrice = row["原币无税单价"].ToString();
+          string iMoney = row["原币无税金额"].ToString();
+          string iTax = row["原币税额"].ToString();
+          string iSum = row["原币价税合计"].ToString();
+          string iNatUnitPrice = row["本币无税单价"].ToString();
+          string iNatMoney = row["本币无税金额"].ToString();
+          string iNatTax = row["本币税额"].ToString();
+          string iNatSum = row["本币价税合计"].ToString();
+          iTaxRate = row["税率"].ToString();
+
+          this.businessBody.AddRow();
+          string currentPKValue = this.businessBody.CurrentPKValue;
+          this.businessBody.Rows[currentPKValue].Cells["cInvCode"].Value = cInvCode;
+          this.businessBody.Rows[currentPKValue].Cells["cInvCode_cInvName"].Value = cInvName;
+          this.businessBody.Rows[currentPKValue].Cells["cSoCode"].Value = cSoCode;
+          this.businessBody.Rows[currentPKValue].Cells["cSoID"].Value = cSoID;
+          this.businessBody.Rows[currentPKValue].Cells["cSoAutoID"].Value = cSoAutoID;
+          this.businessBody.Rows[currentPKValue].Cells["cInvStd"].Value = cInvStd;
+          this.businessBody.Rows[currentPKValue].Cells["cComUnitCode"].Value = cComUnitCode;
+          this.businessBody.Rows[currentPKValue].Cells["fQuantity"].Value = fQuantity.ToString();
+          this.businessBody.Rows[currentPKValue].Cells["iUnitPrice"].Value = iUnitPrice;
+          this.businessBody.Rows[currentPKValue].Cells["iMoney"].Value = iMoney;
+          this.businessBody.Rows[currentPKValue].Cells["iTax"].Value = iTax;
+          this.businessBody.Rows[currentPKValue].Cells["iSum"].Value = iSum;
+          this.businessBody.Rows[currentPKValue].Cells["iPerTaxRate"].Value = iTaxRate;
+          this.businessBody.Rows[currentPKValue].Cells["iNatUnitPrice"].Value = iNatUnitPrice;
+          this.businessBody.Rows[currentPKValue].Cells["iNatMoney"].Value = iNatMoney;
+          this.businessBody.Rows[currentPKValue].Cells["iNatTax"].Value = iNatTax;
+          this.businessBody.Rows[currentPKValue].Cells["iNatSum"].Value = iNatSum;
+          this.businessBody.Rows[currentPKValue].Cells["iQuotedPrice"].Value = iQuotedPrice;
+          this.businessBody.Rows[currentPKValue].Cells["iTaxUnitPrice"].Value = iTaxUnitPrice.ToString();
+        }
+      }
       this.Close();
     }
   }
