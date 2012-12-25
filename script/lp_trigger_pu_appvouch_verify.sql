@@ -28,6 +28,15 @@ as
 			declare @dVerifyDate nvarchar(100)
 			declare @cChanger nvarchar(100)
 			select @cVerifier =cAuditor, @dVerifyDate = dAuditDate,@cChanger = cMender from inserted
+
+			declare @yearStr nvarchar(100)
+			declare @monthStr nvarchar(100)
+			declare @dayStr varchar(100)
+			select @yearStr =  cast (datepart(year,getDate())as nvarchar)
+			select @monthStr = CAST( datepart(month , getdate()) as nvarchar)
+			select @dayStr = CAST( datepart(day , getdate()) as nvarchar)
+			declare @dateStr varchar(255)
+			set @dateStr = @yearStr+'-'+@monthStr+'-'+@dayStr
 			
 			--审核
 			if len(@cVerifier)<>0 or len(@dverifydate) <>0
@@ -89,10 +98,14 @@ as
 			begin tran tran1	
 				declare @cExchName varchar(255)
 				select @cExchName=cexch_name from foreigncurrency where cexch_code = @cExchCode
+
+				if @cbustype=0
+					set @cbustype='普通采购'
 				insert into pu_appvouch(cCode,dDate,cDepCode,cPersonCode,
-			cPTCode,cBusType,ivtid,ID,cDefine1)
-			values(@cMaxNumber,getdate(),@cDepCode,@cPersonCode,
-			@cPTCode,@cBusType,8171,@p5,@cCode)
+			cPTCode,cBusType,ivtid,ID,cDefine1,cmaker,iverifystateex,ibg_overflag,
+			cbg_auditor,cbg_audittime)
+			values(@cMaxNumber,@dateStr,@cDepCode,@cPersonCode,
+			@cPTCode,@cBusType,8171,@p5,@cCode,'demo',0,null,null,null)
 		if @@error <> 0 
 			set @okay1 = 0
 		/*插入销售订单子记录到生成订单*/
@@ -141,8 +154,19 @@ as
 					--select @p2_5, @p2_6
 					
 					insert into pu_appvouchs(ID,autoid,cInvCode,fQuantity,
-					iPerTaxRate,cdefine22) 
-					values(@p5,@p2_6,@cInvCode,@fQuantity,@iPerTaxRate,@lpvouchspk)
+					iPerTaxRate,cdefine22,drequirdate,btaxcost,iexchrate,ivouchrowno,
+					cdefine26,cdefine27,cbg_itemcode,cbg_itemname,cbg_caliberkey1,cbg_caliberkeyname1,
+					cbg_caliberkey2,cbg_caliberkeyname2,cbg_caliberkey3,cbg_caliberkeyname3,
+					cbg_caliberkey4,cbg_caliberkeyname4,cbg_caliberkey5,cbg_caliberkeyname5,
+					cbg_caliberkey6,cbg_caliberkeyname6,
+					cbg_calibercode1,cbg_calibername1,cbg_calibercode2,cbg_calibername2,cbg_calibercode3,cbg_calibername3,
+					cbg_calibercode4,cbg_calibername4,cbg_calibercode5,cbg_calibername5,
+					cbg_calibercode6,cbg_calibername6,
+					ibg_ctrl,cbg_auditopinion) 
+					values(@p5,@p2_6,@cInvCode,@fQuantity,@iPerTaxRate,@lpvouchspk,@dateStr,
+					1,1,@rowCounter,null,null,null,null,null,null,null,null,null,null,
+					null,null,null,null,null,null,null,null,null,null,null,null,
+					null,null,null,null,null,null,null,null)
 
 					fetch next from cursor_fetch_sub into @cInvCode,@fQuantity,@iTaxUnitPrice,
 		@cDetailMemo,@cSoCode,@iMoney,@iTax,@iSum,@iPerTaxRate,

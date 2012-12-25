@@ -25,12 +25,34 @@ go
 			begin
 				
 				declare @cPoCode varchar(255)
-				select @cPoCode=cCode from pu_appvouch where cdefine1=@cCode
-				
+				declare @ID varchar(255)
+				select @cPoCode=cCode from pu_appvouch where cdefine1=@cCode and len(cVerifier)<>0
+				select @ID=ID from pu_appvouch where cdefine1=@cCode
 				if @cPoCode is not null
 				begin
 					set @errMsg = 'LP请购单['+@cCode+']被请购单['+@cPoCode+']引用，不能够弃审'
 					raiserror(@errMsg,16,6)
+				end
+				else
+				begin
+					declare @okay1 bit
+					declare @okay2 bit
+					begin tran tran1 
+					delete from pu_appvouchs where ID=@ID
+					if @@error<>0
+						set @okay1=0
+					else 
+						set @okay1=1
+					delete from pu_appvouch where ID=@ID
+					if @@error<>0
+						set @okay2=0
+					else 
+						set @okay2=1
+					if @okay1=1 and @okay2=1
+						commit tran tran1
+					else
+						rollback tran tran1
+					
 				end
 			end
 		end	
