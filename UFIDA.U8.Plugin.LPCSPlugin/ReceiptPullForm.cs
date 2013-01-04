@@ -70,38 +70,21 @@ namespace UFIDA.U8.Plugin.LPCSPlugin
     /// </summary>
     private void LoadDGVMainData()
     {
-      string sql = @"select 
-convert(bit,0) as 选择,
-ID,
-csocode as 销售订单号,
-saletype.cstcode as 销售类型编码,
-cstname as 销售类型,
-customer.ccuscode as 客户编码,
-customer.ccusname as 客户,
-department.cdepcode as 销售部门编码,
-cdepname as 销售部门,
-person.cpersoncode as 业务员编码,
-cpersonname as 业务员,
-ddate as 单据日期,
-cexch_name as 币种,
-iexchrate as 汇率,
-itaxrate as 税率,
-convert(nchar,convert(money,ufts),2) as ufts
-from so_somain somain
-left join saletype saletype on somain.cstcode = saletype.cstcode
-left join customer customer on somain.ccuscode = customer.ccuscode
-left join department department on somain.cdepcode = department.cdepcode
-left join person person on somain.cpersoncode = person.cpersoncode";
+      string sql = @"lp_proc_pull_appvouch";
       DataTable tableMain = this.connection.Query(sql);
       this.dgvMain.DataSource = tableMain;
-      
+
+      this.dgvMain.Columns["ufts"].Visible = false;
       foreach(DataGridViewColumn column in this.dgvMain.Columns)
       {
         string columnName = column.Name;
         if (!"选择".Equals(columnName))
+        {
           column.ReadOnly = true;
+        }
         else column.ReadOnly = false;
       }
+      this.dgvDetail.DataSource = null;
     }
 
     //private void dgvMain_SelectionChanged(object sender, EventArgs e)
@@ -109,6 +92,21 @@ left join person person on somain.cpersoncode = person.cpersoncode";
     //  string cSoCode = this.GetDGVMainSelectingRowCellValue("销售订单号");
     //  this.LoadDGVDetailData(cSoCode);
     //}
+    private bool ifDetailRowExists(DataRow row)
+    {
+      if (row == null)
+        return true;
+
+      string cSoCode = row["销售订单号"].ToString();
+      DataTable eTable = (DataTable)this.dgvDetail.DataSource;
+      foreach(DataRow row1 in eTable.Rows)
+      {
+        string tmpSoCode = row1["销售订单号"].ToString();
+        if (tmpSoCode.Equals(cSoCode))
+          return true;
+      }
+      return false;
+    }
 
     /// <summary>
     /// 加载子表数据到DataGridViewDetail
@@ -116,33 +114,7 @@ left join person person on somain.cpersoncode = person.cpersoncode";
     /// <param name="code"></param>
     private void AddDGVDetailData(string code)
     {
-      string sql = @"select 
-convert(bit,1) as 选择,
-ID,
-autoid,
-sodetail.csocode 销售订单号,
-inv.cinvcode 存货编码,
-inv.cinvname 存货,
-inv.cInvStd 规格型号,
-unit.ccomunitcode 主计量单位编码,
-unit.ccomunitname 主计量单位,
-dpredate 预发货日期,
-iquantity 数量,
-iquotedprice 报价,
-itaxunitprice 原币含税单价,
-iunitprice 原币无税单价,
-imoney 原币无税金额,
-itax 原币税额,
-isum 原币价税合计,
-inatunitprice 本币无税单价,
-inatmoney 本币无税金额,
-inattax 本币税额,
-inatsum 本币价税合计,
-sodetail.itaxrate 税率
-from so_sodetails sodetail
-left join inventory inv on sodetail.cinvcode = inv.cinvcode
-left join computationunit unit on inv.ccomunitcode = unit.ccomunitcode
-where csocode = '{0}'";
+      string sql = @"lp_proc_pull_appvouchs @cSoCode='{0}'";
       sql = string.Format(sql, code);
       DataTable table = this.connection.Query(sql);
       if (this.dgvDetail.DataSource == null)
@@ -154,7 +126,8 @@ where csocode = '{0}'";
       DataTable eTable = (DataTable)this.dgvDetail.DataSource;
       foreach (DataRow row in table.Rows)
       {
-        eTable.ImportRow(row);
+        if(!this.ifDetailRowExists(row))
+         eTable.ImportRow(row);
       }
 
       foreach (DataGridViewColumn column in this.dgvDetail.Columns)
@@ -173,13 +146,14 @@ where csocode = '{0}'";
     private void RemoveDGVDetailData(string code)
     {
       DataTable eTable = (DataTable)this.dgvDetail.DataSource;
+      if (eTable == null) return;
       DataTable table = eTable.Clone();
 
       //List<int> ll = new List<int>();
       //int counter=0;
       foreach (DataRow row in eTable.Rows)
       {
-        string cSoCode = row["销售订单编号"].ToString();
+        string cSoCode = row["销售订单号"].ToString();
         if (!cSoCode.Equals(code))
           table.ImportRow(row);
       }
@@ -243,7 +217,8 @@ where csocode = '{0}'";
     private bool GetDGVMainSelectingRowCellValueAsBool(string columnName)
     {
       string cellValue = this.GetDGVMainSelectingRowCellValue(columnName);
-      bool b = bool.Parse(cellValue);
+      bool b = false;
+      bool.TryParse(cellValue,out b);
       return b;
     }
 
@@ -266,20 +241,39 @@ where csocode = '{0}'";
       return retRow;
     }
 
-    private void dgvMain_CellValueChanged(object sender, DataGridViewCellEventArgs e)
-    {
-      string cSoCode = this.GetDGVMainSelectingRowCellValue("销售订单号");
-      bool isSelected = this.GetDGVMainSelectingRowCellValueAsBool("选择");
-      if (isSelected)
-        this.AddDGVDetailData(cSoCode);
-      else
-        this.RemoveDGVDetailData(cSoCode);
-    }
+    //private void dgvMain_CellValueChanged(object sender, DataGridViewCellEventArgs e)
+    //{
+      
+    //}
 
     private void tsBtnOk_Click(object sender, EventArgs e)
     {
-      //请购单子表没有选中任何记录 
+      //没有已审核单据
+      if (this.dgvMain.DataSource == null || ((DataTable)this.dgvMain.DataSource).Rows.Count <= 0)
+      {
+        MessageBox.Show("没有已审核的销售订单");
+        return;
+      }
+
+      //至少选择一销售订单
       bool flag = false;
+      DataTable tableMain = (DataTable)this.dgvMain.DataSource;
+      foreach (DataRow row in tableMain.Rows)
+      {
+        if (Boolean.Parse(row["选择"].ToString()))
+        {
+          flag = true;
+          break;
+        }
+      }
+      if (!flag)
+      {
+        MessageBox.Show("至少选择一销售订单");
+        return;
+      }
+
+      //请购单子表没有选中任何记录 
+      flag = false;
       DataTable tempDt = (DataTable)this.dgvDetail.DataSource;
       //if (tempDt == null || tempDt.Rows.Count == 0)
       //{
@@ -312,8 +306,8 @@ where csocode = '{0}'";
           string sUfts = this.connection.GetString(sql);
           if (!sTmpUfts.Equals(sUfts))
           {
-            string cCode = dr["销售订单编号"].ToString();
-            MessageBox.Show("销售订单编号[" + cCode + "]被修改过或者删除，请点击查询按钮进行刷新");
+            string cCode = dr["销售订单号"].ToString();
+            MessageBox.Show("销售订单号[" + cCode + "]被修改过或者删除，请点击查询按钮进行刷新");
             return;
           }
         }
@@ -380,13 +374,14 @@ where csocode = '{0}'";
 
           this.businessBody.AddRow();
           string currentPKValue = this.businessBody.CurrentPKValue;
+          this.businessBody.Rows[currentPKValue].Cells["cInvDisCode"].Value = cInvCode;
           this.businessBody.Rows[currentPKValue].Cells["cInvCode"].Value = cInvCode;
           this.businessBody.Rows[currentPKValue].Cells["cInvCode_cInvName"].Value = cInvName;
           this.businessBody.Rows[currentPKValue].Cells["cSoCode"].Value = cSoCode;
           this.businessBody.Rows[currentPKValue].Cells["cSoID"].Value = cSoID;
           this.businessBody.Rows[currentPKValue].Cells["cSoAutoID"].Value = cSoAutoID;
           this.businessBody.Rows[currentPKValue].Cells["cInvStd"].Value = cInvStd;
-          this.businessBody.Rows[currentPKValue].Cells["cComUnitCode"].Value = cComUnitCode;
+          this.businessBody.Rows[currentPKValue].Cells["cComUnitCode"].Value = cComUnitName;
           this.businessBody.Rows[currentPKValue].Cells["fQuantity"].Value = fQuantity.ToString();
           this.businessBody.Rows[currentPKValue].Cells["iUnitPrice"].Value = iUnitPrice;
           this.businessBody.Rows[currentPKValue].Cells["iMoney"].Value = iMoney;
@@ -402,6 +397,24 @@ where csocode = '{0}'";
         }
       }
       this.Close();
+    }
+
+    private void dgvMain_CellContentClick(object sender, DataGridViewCellEventArgs e)
+    {
+      this.dgvMain.CommitEdit(DataGridViewDataErrorContexts.Commit);
+      string cSoCode = this.GetDGVMainSelectingRowCellValue("销售订单号");
+      bool isSelected = this.GetDGVMainSelectingRowCellValueAsBool("选择");
+      if (isSelected)
+        this.AddDGVDetailData(cSoCode);
+      else
+        this.RemoveDGVDetailData(cSoCode);
+      this.businessBody.AllowUIAddRow = false;
+      this.businessBody.ReadOnly = true;
+    }
+
+    private void toolStripButton1_Click(object sender, EventArgs e)
+    {
+      this.LoadDGVMainData();
     }
   }
 }

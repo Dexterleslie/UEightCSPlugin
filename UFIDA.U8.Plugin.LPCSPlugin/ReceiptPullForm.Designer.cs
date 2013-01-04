@@ -34,9 +34,10 @@
       this.dgvMain = new System.Windows.Forms.DataGridView();
       this.dgvDetail = new System.Windows.Forms.DataGridView();
       this.toolStrip1 = new System.Windows.Forms.ToolStrip();
-      this.tsBtnOk = new System.Windows.Forms.ToolStripButton();
       this.tsBtnSearch = new System.Windows.Forms.ToolStripButton();
       this.tsBtnCancel = new System.Windows.Forms.ToolStripButton();
+      this.tsBtnOk = new System.Windows.Forms.ToolStripButton();
+      this.toolStripButton1 = new System.Windows.Forms.ToolStripButton();
       this.splitContainer1.Panel1.SuspendLayout();
       this.splitContainer1.Panel2.SuspendLayout();
       this.splitContainer1.SuspendLayout();
@@ -92,7 +93,7 @@
       this.dgvMain.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
       this.dgvMain.Size = new System.Drawing.Size(654, 152);
       this.dgvMain.TabIndex = 0;
-      this.dgvMain.CellValueChanged += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgvMain_CellValueChanged);
+      this.dgvMain.CellContentClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgvMain_CellContentClick);
       // 
       // dgvDetail
       // 
@@ -112,22 +113,13 @@
       this.toolStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.tsBtnSearch,
             this.tsBtnCancel,
-            this.tsBtnOk});
+            this.tsBtnOk,
+            this.toolStripButton1});
       this.toolStrip1.Location = new System.Drawing.Point(0, 0);
       this.toolStrip1.Name = "toolStrip1";
       this.toolStrip1.Size = new System.Drawing.Size(654, 25);
       this.toolStrip1.TabIndex = 1;
       this.toolStrip1.Text = "toolStrip1";
-      // 
-      // tsBtnOk
-      // 
-      this.tsBtnOk.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
-      this.tsBtnOk.Image = ((System.Drawing.Image)(resources.GetObject("tsBtnOk.Image")));
-      this.tsBtnOk.ImageTransparentColor = System.Drawing.Color.Magenta;
-      this.tsBtnOk.Name = "tsBtnOk";
-      this.tsBtnOk.Size = new System.Drawing.Size(33, 22);
-      this.tsBtnOk.Text = "确定";
-      this.tsBtnOk.Click += new System.EventHandler(this.tsBtnOk_Click);
       // 
       // tsBtnSearch
       // 
@@ -146,6 +138,26 @@
       this.tsBtnCancel.Name = "tsBtnCancel";
       this.tsBtnCancel.Size = new System.Drawing.Size(33, 22);
       this.tsBtnCancel.Text = "取消";
+      // 
+      // tsBtnOk
+      // 
+      this.tsBtnOk.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
+      this.tsBtnOk.Image = ((System.Drawing.Image)(resources.GetObject("tsBtnOk.Image")));
+      this.tsBtnOk.ImageTransparentColor = System.Drawing.Color.Magenta;
+      this.tsBtnOk.Name = "tsBtnOk";
+      this.tsBtnOk.Size = new System.Drawing.Size(33, 22);
+      this.tsBtnOk.Text = "确定";
+      this.tsBtnOk.Click += new System.EventHandler(this.tsBtnOk_Click);
+      // 
+      // toolStripButton1
+      // 
+      this.toolStripButton1.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
+      this.toolStripButton1.Image = ((System.Drawing.Image)(resources.GetObject("toolStripButton1.Image")));
+      this.toolStripButton1.ImageTransparentColor = System.Drawing.Color.Magenta;
+      this.toolStripButton1.Name = "toolStripButton1";
+      this.toolStripButton1.Size = new System.Drawing.Size(33, 22);
+      this.toolStripButton1.Text = "刷新";
+      this.toolStripButton1.Click += new System.EventHandler(this.toolStripButton1_Click);
       // 
       // ReceiptPullForm
       // 
@@ -180,5 +192,6 @@
     private System.Windows.Forms.ToolStripButton tsBtnOk;
     private System.Windows.Forms.ToolStripButton tsBtnSearch;
     private System.Windows.Forms.ToolStripButton tsBtnCancel;
+    private System.Windows.Forms.ToolStripButton toolStripButton1;
   }
 }

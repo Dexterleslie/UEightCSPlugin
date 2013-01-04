@@ -29,7 +29,9 @@ namespace UFIDA.U8.Plugin.LPCSPlugin
     public string Excuted(VoucherProxy ReceiptObject, string PreExcuteResult)
     {
       ReceiptPullForm frm = new ReceiptPullForm(this.connectionString, ReceiptObject);
+      frm.WindowState = FormWindowState.Maximized;
       frm.ShowDialog();
+      //frm.Show();
       return null;
     }
 
