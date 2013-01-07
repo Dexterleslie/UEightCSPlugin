@@ -53,7 +53,6 @@ namespace UFIDA.U8.Plugin.LPCSPlugin
       this.voucherProxy = voucherProxy;
       this.businessHeader = this.voucherProxy.Businesses[this.entityHeaderID];
       this.businessBody = this.voucherProxy.Businesses[this.entityBodyID];
-
       this.dalExch = new DALU8Exch(this.connectionString);
     }
 
@@ -327,6 +326,7 @@ namespace UFIDA.U8.Plugin.LPCSPlugin
 
       if (firstHeaderRow == null)
         return;
+      string dDate = DateTime.Now.ToString("yyyy-MM-dd");
 
       //设置表头数据
       string cCode1 = "001";
@@ -334,12 +334,25 @@ namespace UFIDA.U8.Plugin.LPCSPlugin
       string cCurrencyCode = this.dalExch.getCodeByName(cCurrencyName);
       string iExchRate = firstHeaderRow["汇率"].ToString();
       string iTaxRate = firstHeaderRow["税率"].ToString();
+      string cPersonCode = firstHeaderRow["业务员编码"].ToString();
+      string cPersonName = firstHeaderRow["业务员"].ToString();
+      string cDepCode = firstHeaderRow["销售部门编码"].ToString();
+      string cDepName = firstHeaderRow["销售部门"].ToString();
+      string cCusCode = firstHeaderRow["客户编码"].ToString();
+      string cCusName = firstHeaderRow["客户"].ToString();
 
       this.businessHeader.Cells["cCode"].Value = cCode1;
       this.businessHeader.Cells["cExchCode"].Value = cCurrencyCode;
       this.businessHeader.Cells["cexch_name"].Value = cCurrencyName;
       this.businessHeader.Cells["nFlat"].Value = iExchRate;
       this.businessHeader.Cells["iTaxRate"].Value = iTaxRate;
+      this.businessHeader.Cells["cPersonCode"].Value = cPersonCode;
+      this.businessHeader.Cells["cPersonCode_cPersonName"].Value = cPersonName;
+      this.businessHeader.Cells["cDepCode"].Value = cDepCode;
+      this.businessHeader.Cells["cDepCode_cDepName"].Value = cDepName;
+      this.businessHeader.Cells["cCusCode"].Value = cCusCode;
+      this.businessHeader.Cells["cCusCode_cCusAbbName"].Value = cCusName;
+      this.businessHeader.Cells["dDate"].Value = dDate;
 
       this.businessBody.Clear();
       for (int i = 0; i < tempDt.Rows.Count; i++)
@@ -396,6 +409,9 @@ namespace UFIDA.U8.Plugin.LPCSPlugin
           this.businessBody.Rows[currentPKValue].Cells["iTaxUnitPrice"].Value = iTaxUnitPrice.ToString();
         }
       }
+      this.businessBody.Cells["cInvCode"].ReadOnly = true;
+      this.businessBody.Cells["fQuantity"].ReadOnly = true;
+      this.businessBody.Cells["cSoCode"].ReadOnly = true;
       this.Close();
     }
 
@@ -404,12 +420,33 @@ namespace UFIDA.U8.Plugin.LPCSPlugin
       this.dgvMain.CommitEdit(DataGridViewDataErrorContexts.Commit);
       string cSoCode = this.GetDGVMainSelectingRowCellValue("销售订单号");
       bool isSelected = this.GetDGVMainSelectingRowCellValueAsBool("选择");
+      string cSPersonCode = this.GetDGVMainSelectingRowCellValue("业务员编码");
+      string cSDepCode = this.GetDGVMainSelectingRowCellValue("销售部门编码");
       if (isSelected)
+      {
+        //验证业务员和部门一致
+        DataTable dtMain = (DataTable)this.dgvMain.DataSource;
+        if (dtMain != null)
+        {
+          foreach (DataRow row in dtMain.Rows)
+          {
+            if (Boolean.Parse(row["选择"].ToString()))
+            {
+              string cPersonCode = row["业务员编码"].ToString();
+              string cDepCode = row["销售部门编码"].ToString();
+              if (!cSPersonCode.Equals(cPersonCode) || !cSDepCode.Equals(cDepCode))
+              {
+                MessageBox.Show("请选择业务员和部门一致的销售订单");
+                this.GetDGVMainSelectingRow().Cells["选择"].Value = false;
+                return;
+              }
+            }
+          }
+        }
         this.AddDGVDetailData(cSoCode);
+      }
       else
         this.RemoveDGVDetailData(cSoCode);
-      this.businessBody.AllowUIAddRow = false;
-      this.businessBody.ReadOnly = true;
     }
 
     private void toolStripButton1_Click(object sender, EventArgs e)

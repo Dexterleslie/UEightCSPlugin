@@ -33,16 +33,18 @@ as
 			declare @monthStr nvarchar(100)
 			declare @dayStr varchar(100)
 			select @yearStr =  cast (datepart(year,getDate())as nvarchar)
-			select @monthStr = CAST( datepart(month , getdate()) as nvarchar)
-			select @dayStr = CAST( datepart(day , getdate()) as nvarchar)
+			select @monthStr = REPLICATE('0',2-LEN(CAST( datepart(month , getdate()) as nvarchar)))+CAST( datepart(month , getdate()) as nvarchar)
+			select @dayStr = REPLICATE('0',2-LEN(CAST( datepart(day , getdate()) as nvarchar)))+CAST( datepart(day , getdate()) as nvarchar)
 			declare @dateStr varchar(255)
+			--raiserror(@monthStr,16,6)
+			--return
 			set @dateStr = @yearStr+'-'+@monthStr+'-'+@dayStr
 			
+			--raiserror('ddd',16,6)
 			--…Û∫À
 			if len(@cVerifier)<>0 or len(@dverifydate) <>0
 			begin
-				if @cChanger is null or len(@cChanger) =0
-				begin
+				--raiserror('ddd',16,6)
 				--raiserror(@cAccID,16,6)
 				declare @cCode varchar(255)
 				declare @cDepCode varchar(255)
@@ -71,7 +73,8 @@ as
 				select @cNumber=(cNumber+1) From VoucherHistory with (NOLOCK)Where CardNumber='27' and cContent is NULL
 				--select (cNumber+1) From VoucherHistory with (NOLOCK)Where CardNumber='MO21' and cContent is NULL
 				set @cMaxNumber = @cNumber
-				set @cMaxNumber = REPLICATE('0',10-LEN(@cNumber))+@cNumber
+				set @cMaxNumber = REPLICATE('0',4-LEN(@cNumber))+@cNumber
+				set @cMaxNumber=@yearStr+@monthStr+@cMaxNumber
 
 				if 1=1 --@cSTCode <> '06'
 				begin
@@ -90,7 +93,9 @@ as
 				set @p5=4152
 				declare @p6 int
 				set @p6=4152
-				exec sp_GetID @RemoteId=N'00',@cAcc_Id=@cAccID,@cVouchType=N'pu_appvouch',@iAmount=1,@iFatherId=@p5 output,@iChildId=@p6 output
+				--raiserror(@cAccID,16,6)
+				--return;
+				exec sp_GetID @RemoteId=N'00',@cAcc_Id=@cAccID,@cVouchType=N'PuApp',@iAmount=1,@iFatherId=@p5 output,@iChildId=@p6 output
 				
 				--select @p5, @p6	
 				--raiserror(@p5,16,6);
@@ -114,7 +119,8 @@ as
 		declare cursor_fetch_sub cursor for 
 			select cInvCode,fQuantity,iTaxUnitPrice,cDetailMemo,cSoCode,
 			iMoney,iTax,iSum,iPerTaxRate,iNatUnitPrice,
-			iNatMoney,iNatTax,iNatSum,iQuotedPrice,cSoID,cSoAutoID,lpvouchspk 
+			iNatMoney,iNatTax,iNatSum,iQuotedPrice,cSoID,cSoAutoID,lpvouchspk,
+			dRequireDate,dArriveDate 
 			from lp_pu_appvouchs where lpvouchpk =@lpvouchpk
 		open cursor_fetch_sub
  
@@ -138,11 +144,13 @@ as
 		declare @cSoID varchar(255)
 		declare @cSoAutoID varchar(255)
 		declare @lpvouchspk varchar(255)
+		declare @dRequireDate varchar(255)
+		declare @dArriveDate varchar(255)
 		 		 
 		 fetch next from cursor_fetch_sub into @cInvCode,@fQuantity,@iTaxUnitPrice,
 		@cDetailMemo,@cSoCode,@iMoney,@iTax,@iSum,@iPerTaxRate,
 		@iNatUnitPrice,@iNatMoney,@iNatTax,@iNatSum,@iQuotedPrice,@cSoID,@cSoAutoID,
-		@lpvouchspk
+		@lpvouchspk,@dRequireDate,@dArriveDate
 		 
 		 while @@fetch_status =0
 		 begin
@@ -150,10 +158,10 @@ as
 					set @p2_5=9414
 					declare @p2_6 int
 					set @p2_6=7253
-					exec sp_GetID @RemoteId=N'00',@cAcc_Id=@cAccID,@cVouchType=N'pu_appvouchs',@iAmount=1,@iFatherId=@p2_5 output,@iChildId=@p2_6 output
+					exec sp_GetID @RemoteId=N'00',@cAcc_Id=@cAccID,@cVouchType=N'PuApp',@iAmount=1,@iFatherId=@p2_5 output,@iChildId=@p2_6 output
 					--select @p2_5, @p2_6
 					
-					insert into pu_appvouchs(ID,autoid,cInvCode,fQuantity,
+					/*insert into pu_appvouchs(ID,autoid,cInvCode,fQuantity,
 					iPerTaxRate,cdefine22,drequirdate,btaxcost,iexchrate,ivouchrowno,
 					cdefine26,cdefine27,cbg_itemcode,cbg_itemname,cbg_caliberkey1,cbg_caliberkeyname1,
 					cbg_caliberkey2,cbg_caliberkeyname2,cbg_caliberkey3,cbg_caliberkeyname3,
@@ -166,12 +174,26 @@ as
 					values(@p5,@p2_6,@cInvCode,@fQuantity,@iPerTaxRate,@lpvouchspk,@dateStr,
 					1,1,@rowCounter,null,null,null,null,null,null,null,null,null,null,
 					null,null,null,null,null,null,null,null,null,null,null,null,
-					null,null,null,null,null,null,null,null)
+					null,null,null,null,null,null,null,null)*/
+					insert into pu_appvouchs(ID,autoid,cInvCode,fQuantity,
+					iPerTaxRate,cdefine22,drequirdate,btaxcost,iexchrate,ivouchrowno,
+					cdefine26,cdefine27,cbg_itemcode,cbg_itemname,cbg_caliberkey1,cbg_caliberkeyname1,
+					cbg_caliberkey2,cbg_caliberkeyname2,cbg_caliberkey3,cbg_caliberkeyname3,
+					cbg_caliberkey4,cbg_caliberkeyname4,cbg_caliberkey5,cbg_caliberkeyname5,
+					cbg_caliberkey6,cbg_caliberkeyname6,
+					cbg_calibercode1,cbg_calibername1,cbg_calibercode2,cbg_calibername2,cbg_calibercode3,cbg_calibername3,
+					cbg_calibercode4,cbg_calibername4,cbg_calibercode5,cbg_calibername5,
+					cbg_calibercode6,cbg_calibername6,
+					ibg_ctrl,cbg_auditopinion,darrivedate) 
+					values(@p5,@p2_6,@cInvCode,@fQuantity,@iPerTaxRate,@lpvouchspk,@dRequireDate,
+					1,1,@rowCounter,null,null,null,null,null,null,null,null,null,null,
+					null,null,null,null,null,null,null,null,null,null,null,null,
+					null,null,null,null,null,null,null,null,@dArriveDate)
 
 					fetch next from cursor_fetch_sub into @cInvCode,@fQuantity,@iTaxUnitPrice,
 		@cDetailMemo,@cSoCode,@iMoney,@iTax,@iSum,@iPerTaxRate,
 		@iNatUnitPrice,@iNatMoney,@iNatTax,@iNatSum,@iQuotedPrice,@cSoID,@cSoAutoID,
-		@lpvouchspk
+		@lpvouchspk,@dRequireDate,@dArriveDate
 
 					if @@error <> 0
 						set @okay2=0
@@ -194,8 +216,6 @@ as
 				rollback tran tran1
 				return ;
 				end
-					
-			end
 			end
 		end
 		set nocount off

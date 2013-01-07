@@ -5,7 +5,24 @@ go
 go
 	create proc lp_proc_pull_appvouch
 	as
-	begin 
+	begin  
+		select cSoCode,count(cSoAutoID) cnt
+		into #lp_proc_pull_appvouch_tmp1 
+		from lp_pu_appvouchs
+		group by cSoCode
+
+		select so_sodetails.cSoCode,count(autoid) cnt 
+		into #lp_proc_pull_appvouch_tmp2
+		from so_sodetails,so_somain 
+		where so_sodetails.csocode=so_somain.csocode 
+		and len(so_somain.cVerifier)<>0
+		group by so_sodetails.cSoCode
+
+		select tmp2.csocode into #lp_proc_pull_appvouch_tmp3
+		from #lp_proc_pull_appvouch_tmp2 tmp2
+		left join #lp_proc_pull_appvouch_tmp1 tmp1 on tmp2.csocode=tmp1.csocode
+		where tmp2.cnt-isnull(tmp1.cnt,0)>0
+
 		select 
 convert(bit,0) as Ñ¡Ôñ,
 ID,
@@ -28,6 +45,6 @@ left join saletype saletype on somain.cstcode = saletype.cstcode
 left join customer customer on somain.ccuscode = customer.ccuscode
 left join department department on somain.cdepcode = department.cdepcode
 left join person person on somain.cpersoncode = person.cpersoncode
-where len(cVerifier)<>0
+where len(cVerifier)<>0 and somain.csocode in(select csocode from #lp_proc_pull_appvouch_tmp3)
 	end 
 go

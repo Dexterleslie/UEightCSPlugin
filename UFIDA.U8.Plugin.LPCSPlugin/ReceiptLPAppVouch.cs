@@ -18,9 +18,9 @@ namespace UFIDA.U8.Plugin.LPCSPlugin
         string connStr = voucherObject.LoginInfo.UFDataSqlConStr;
         string buttonKey = ButtonArgs.ButtonKey;
         if ("btnMakeVoucher".Equals(buttonKey))
-        {
           return new ButtonHandlerLPAppVouchPullSaleOrder(connStr);
-        }
+        else if ("btnAddVoucher".Equals(buttonKey))
+          return new ButtonHandlerLPAppVouchAdd(connStr);
         return null;
       }
 

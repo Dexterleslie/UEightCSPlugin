@@ -33,6 +33,6 @@ sodetail.itaxrate Ë°ÂÊ
 from so_sodetails sodetail
 left join inventory inv on sodetail.cinvcode = inv.cinvcode
 left join computationunit unit on inv.ccomunitcode = unit.ccomunitcode
-where csocode = @cSoCode
+where csocode = @cSoCode and sodetail.autoid not in (select csoautoid from lp_pu_appvouchs)
 	end 
 go
