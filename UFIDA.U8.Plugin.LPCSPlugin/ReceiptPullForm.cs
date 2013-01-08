@@ -329,7 +329,7 @@ namespace UFIDA.U8.Plugin.LPCSPlugin
       string dDate = DateTime.Now.ToString("yyyy-MM-dd");
 
       //设置表头数据
-      string cCode1 = "001";
+      //string cCode1 = "001";
       string cCurrencyName = firstHeaderRow["币种"].ToString();
       string cCurrencyCode = this.dalExch.getCodeByName(cCurrencyName);
       string iExchRate = firstHeaderRow["汇率"].ToString();
@@ -341,7 +341,7 @@ namespace UFIDA.U8.Plugin.LPCSPlugin
       string cCusCode = firstHeaderRow["客户编码"].ToString();
       string cCusName = firstHeaderRow["客户"].ToString();
 
-      this.businessHeader.Cells["cCode"].Value = cCode1;
+      //this.businessHeader.Cells["cCode"].Value = cCode1;
       this.businessHeader.Cells["cExchCode"].Value = cCurrencyCode;
       this.businessHeader.Cells["cexch_name"].Value = cCurrencyName;
       this.businessHeader.Cells["nFlat"].Value = iExchRate;
