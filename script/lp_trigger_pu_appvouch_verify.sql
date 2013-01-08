@@ -71,6 +71,8 @@ as
 				declare @cNumber nvarchar(100)
 
 				select @cNumber=(cNumber+1) From VoucherHistory with (NOLOCK)Where CardNumber='27' and cContent is NULL
+				if cast(@cNumber as int)>=10000
+					set @cNumber=1
 				--select (cNumber+1) From VoucherHistory with (NOLOCK)Where CardNumber='MO21' and cContent is NULL
 				set @cMaxNumber = @cNumber
 				set @cMaxNumber = REPLICATE('0',4-LEN(@cNumber))+@cNumber
@@ -209,7 +211,7 @@ as
  
 				if @okay1=1 and @okay2=1
 				begin
-					 update VoucherHistory set cNumber = @cMaxNumber Where CardNumber='27' and cContent is NULL
+					 update VoucherHistory set cNumber = @cNumber Where CardNumber='27' and cContent is NULL
 					 commit tran tran1
 					 return ;
 				end 
