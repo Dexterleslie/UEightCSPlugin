@@ -109,10 +109,10 @@ as
 				if @cbustype=0
 					set @cbustype='普通采购'
 				insert into pu_appvouch(cCode,dDate,cDepCode,cPersonCode,
-			cPTCode,cBusType,ivtid,ID,cDefine1,cmaker,iverifystateex,ibg_overflag,
-			cbg_auditor,cbg_audittime)
+			cPTCode,cBusType,ivtid,ID,cDefine1,cmaker,ibg_overflag,
+			cbg_auditor,cbg_audittime,cVerifier,iverifystateex,cAuditTime,cAuditDate)
 			values(@cMaxNumber,@dateStr,@cDepCode,@cPersonCode,
-			@cPTCode,@cBusType,8171,@p5,@cCode,'demo',0,null,null,null)
+			@cPTCode,@cBusType,8171,@p5,@cCode,'demo',null,null,null,'demo',2,getdate(),@dateStr)
 		if @@error <> 0 
 			set @okay1 = 0
 		/*插入销售订单子记录到生成订单*/
