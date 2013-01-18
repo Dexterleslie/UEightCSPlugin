@@ -59,10 +59,12 @@ as
 				declare @nFlat float 
 				declare @iTaxRate float
 				declare @lpvouchpk varchar(255)
+				declare @cMaker varchar(255)
 				select @cCode=cCode,@cDepCode=cDepCode,@cCusCode=cCusCode,
 				@cPersonCode=cPersonCode,@cMemo=cMemo,@cBusType=cBusType,
 				@cPTCode=cPTCode,@cDate=dDate,@cVenCode=cVenCode,@cExchCode=cExchCode,
-				@nFlat=nFlat,@iTaxRate=iTaxRate,@lpvouchpk=lpvouchpk from inserted
+				@nFlat=nFlat,@iTaxRate=iTaxRate,@lpvouchpk=lpvouchpk,
+				@cMaker=cMaker from inserted
 
 				--raiserror(@lpvouchpk ,16,6)
 				
@@ -109,10 +111,12 @@ as
 				if @cbustype=0
 					set @cbustype='普通采购'
 				insert into pu_appvouch(cCode,dDate,cDepCode,cPersonCode,
-			cPTCode,cBusType,ivtid,ID,cDefine1,cmaker,ibg_overflag,
-			cbg_auditor,cbg_audittime,cVerifier,iverifystateex,cAuditTime,cAuditDate)
+			cPTCode,cBusType,ivtid,ID,cDefine1,ibg_overflag,
+			cbg_auditor,cbg_audittime,iverifystateex,cAuditTime,cAuditDate,
+			cverifier,cMaker)
 			values(@cMaxNumber,@dateStr,@cDepCode,@cPersonCode,
-			@cPTCode,@cBusType,8171,@p5,@cCode,'demo',null,null,null,'demo',2,getdate(),@dateStr)
+			@cPTCode,@cBusType,8171,@p5,@cCode,null,null,null,2,getdate(),@dateStr,
+			@cMaker,@cMaker)
 		if @@error <> 0 
 			set @okay1 = 0
 		/*插入销售订单子记录到生成订单*/

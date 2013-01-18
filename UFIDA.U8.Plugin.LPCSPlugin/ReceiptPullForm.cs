@@ -42,6 +42,8 @@ namespace UFIDA.U8.Plugin.LPCSPlugin
     //}
 
     private string connectionString = null;
+
+    private DataTable originDataTable;
     public ReceiptPullForm(string connectionString, VoucherProxy voucherProxy)
     {
       //if (mediator == null)
@@ -72,6 +74,7 @@ namespace UFIDA.U8.Plugin.LPCSPlugin
       string sql = @"lp_proc_pull_appvouch";
       DataTable tableMain = this.connection.Query(sql);
       this.dgvMain.DataSource = tableMain;
+      this.originDataTable = tableMain.Copy();
 
       this.dgvMain.Columns["ufts"].Visible = false;
       foreach(DataGridViewColumn column in this.dgvMain.Columns)
@@ -84,6 +87,54 @@ namespace UFIDA.U8.Plugin.LPCSPlugin
         else column.ReadOnly = false;
       }
       this.dgvDetail.DataSource = null;
+
+      this.dgvMain.Columns["ID"].Visible = false;
+      this.InitFilterComponents();
+    }
+
+    class InternalEntry
+    {
+      public string fieldName;
+      public ComboBox comboBox;
+      public InternalEntry(string fieldName, ComboBox comboBox)
+      {
+        this.fieldName = fieldName;
+        this.comboBox = comboBox;
+      }
+    }
+
+    private void InitFilterComponents()
+    {
+      List<InternalEntry> entries = new List<InternalEntry>();
+      entries.Add(new InternalEntry("销售订单号",this.cbSoCode));
+      entries.Add(new InternalEntry("销售类型", this.cbSoType));
+      entries.Add(new InternalEntry("客户编码", this.cbCusCode));
+      entries.Add(new InternalEntry("客户", this.cbCusName));
+      entries.Add(new InternalEntry("销售部门编码", this.cbDepCode));
+      entries.Add(new InternalEntry("销售部门", this.cbDepName));
+      entries.Add(new InternalEntry("业务员编码", this.cbPsnCode));
+      entries.Add(new InternalEntry("业务员", this.cbPsnName));
+
+      foreach (InternalEntry entry in entries)
+      {
+        string fieldName = entry.fieldName;
+        ComboBox comboBox = entry.comboBox;
+        List<string> vals = new List<string>();
+        foreach (DataRow row in this.originDataTable.Rows)
+        {
+          object obj = row[fieldName];
+          if (obj != null)
+          {
+            string fieldVal = obj.ToString();
+            if (!vals.Contains(fieldVal)&&!string.IsNullOrEmpty(fieldVal))
+              vals.Add(fieldVal);
+          }
+        }
+
+        comboBox.Items.Clear();
+        foreach (string val in vals)
+          comboBox.Items.Add(val);
+      }
     }
 
     //private void dgvMain_SelectionChanged(object sender, EventArgs e)
@@ -119,7 +170,7 @@ namespace UFIDA.U8.Plugin.LPCSPlugin
       if (this.dgvDetail.DataSource == null)
       {
         this.dgvDetail.DataSource = table;
-        return;
+        //return;
       }
 
       DataTable eTable = (DataTable)this.dgvDetail.DataSource;
@@ -136,6 +187,9 @@ namespace UFIDA.U8.Plugin.LPCSPlugin
           column.ReadOnly = true;
         else column.ReadOnly = false;
       }
+
+      this.dgvDetail.Columns["ID"].Visible = false;
+      this.dgvDetail.Columns["autoid"].Visible = false;
     }
 
     /// <summary>
@@ -373,16 +427,16 @@ namespace UFIDA.U8.Plugin.LPCSPlugin
           string cInvStd = row["规格型号"].ToString();
           string cComUnitCode = row["主计量单位编码"].ToString();
           string cComUnitName = row["主计量单位"].ToString();
-          string iQuotedPrice = row["报价"].ToString();
-          float iTaxUnitPrice = Convert.ToSingle(row["原币含税单价"].ToString());
-          string iUnitPrice = row["原币无税单价"].ToString();
-          string iMoney = row["原币无税金额"].ToString();
-          string iTax = row["原币税额"].ToString();
-          string iSum = row["原币价税合计"].ToString();
-          string iNatUnitPrice = row["本币无税单价"].ToString();
-          string iNatMoney = row["本币无税金额"].ToString();
-          string iNatTax = row["本币税额"].ToString();
-          string iNatSum = row["本币价税合计"].ToString();
+          //string iQuotedPrice = row["报价"].ToString();
+          //float iTaxUnitPrice = Convert.ToSingle(row["原币含税单价"].ToString());
+          //string iUnitPrice = row["原币无税单价"].ToString();
+          //string iMoney = row["原币无税金额"].ToString();
+          //string iTax = row["原币税额"].ToString();
+          //string iSum = row["原币价税合计"].ToString();
+          //string iNatUnitPrice = row["本币无税单价"].ToString();
+          //string iNatMoney = row["本币无税金额"].ToString();
+          //string iNatTax = row["本币税额"].ToString();
+          //string iNatSum = row["本币价税合计"].ToString();
           iTaxRate = row["税率"].ToString();
 
           this.businessBody.AddRow();
@@ -396,17 +450,17 @@ namespace UFIDA.U8.Plugin.LPCSPlugin
           this.businessBody.Rows[currentPKValue].Cells["cInvStd"].Value = cInvStd;
           this.businessBody.Rows[currentPKValue].Cells["cComUnitCode"].Value = cComUnitName;
           this.businessBody.Rows[currentPKValue].Cells["fQuantity"].Value = fQuantity.ToString();
-          this.businessBody.Rows[currentPKValue].Cells["iUnitPrice"].Value = iUnitPrice;
-          this.businessBody.Rows[currentPKValue].Cells["iMoney"].Value = iMoney;
-          this.businessBody.Rows[currentPKValue].Cells["iTax"].Value = iTax;
-          this.businessBody.Rows[currentPKValue].Cells["iSum"].Value = iSum;
+          //this.businessBody.Rows[currentPKValue].Cells["iUnitPrice"].Value = iUnitPrice;
+          //this.businessBody.Rows[currentPKValue].Cells["iMoney"].Value = iMoney;
+          //this.businessBody.Rows[currentPKValue].Cells["iTax"].Value = iTax;
+          //this.businessBody.Rows[currentPKValue].Cells["iSum"].Value = iSum;
           this.businessBody.Rows[currentPKValue].Cells["iPerTaxRate"].Value = iTaxRate;
-          this.businessBody.Rows[currentPKValue].Cells["iNatUnitPrice"].Value = iNatUnitPrice;
-          this.businessBody.Rows[currentPKValue].Cells["iNatMoney"].Value = iNatMoney;
-          this.businessBody.Rows[currentPKValue].Cells["iNatTax"].Value = iNatTax;
-          this.businessBody.Rows[currentPKValue].Cells["iNatSum"].Value = iNatSum;
-          this.businessBody.Rows[currentPKValue].Cells["iQuotedPrice"].Value = iQuotedPrice;
-          this.businessBody.Rows[currentPKValue].Cells["iTaxUnitPrice"].Value = iTaxUnitPrice.ToString();
+          //this.businessBody.Rows[currentPKValue].Cells["iNatUnitPrice"].Value = iNatUnitPrice;
+          //this.businessBody.Rows[currentPKValue].Cells["iNatMoney"].Value = iNatMoney;
+          //this.businessBody.Rows[currentPKValue].Cells["iNatTax"].Value = iNatTax;
+          //this.businessBody.Rows[currentPKValue].Cells["iNatSum"].Value = iNatSum;
+          //this.businessBody.Rows[currentPKValue].Cells["iQuotedPrice"].Value = iQuotedPrice;
+          //this.businessBody.Rows[currentPKValue].Cells["iTaxUnitPrice"].Value = iTaxUnitPrice.ToString();
         }
       }
       this.businessBody.Cells["cInvCode"].ReadOnly = true;
@@ -452,6 +506,48 @@ namespace UFIDA.U8.Plugin.LPCSPlugin
     private void toolStripButton1_Click(object sender, EventArgs e)
     {
       this.LoadDGVMainData();
+    }
+
+    private void tsBtnSearch_Click(object sender, EventArgs e)
+    {
+      string cSoCode = this.cbSoCode.Text;
+      string cCusCode = this.cbCusCode.Text;
+      string cCusName = this.cbCusName.Text;
+      string cDepCode = this.cbDepCode.Text;
+      string cDepName = this.cbDepName.Text;
+      string cPersonCode = this.cbPsnCode.Text;
+      string cPersonName = this.cbPsnName.Text;
+      string cSoType = this.cbSoType.Text;
+
+      string filterString=" (1=1) ";
+      if (!string.IsNullOrEmpty(cSoCode))
+        filterString += string.Format(" and 销售订单号='{0}' ", cSoCode);
+      if(!string.IsNullOrEmpty(cCusCode))
+        filterString += string.Format(" and 客户编码='{0}' ", cCusCode);
+      if (!string.IsNullOrEmpty(cCusName))
+        filterString += string.Format(" and 客户='{0}' ", cCusName);
+      if (!string.IsNullOrEmpty(cDepCode))
+        filterString += string.Format(" and 销售部门编码='{0}' ", cDepCode);
+      if (!string.IsNullOrEmpty(cDepName))
+        filterString += string.Format(" and 销售部门='{0}' ", cDepName);
+      if (!string.IsNullOrEmpty(cPersonCode))
+        filterString += string.Format(" and 业务员编码='{0}' ", cPersonCode);
+      if (!string.IsNullOrEmpty(cPersonName))
+        filterString += string.Format(" and 业务员='{0}' ", cPersonName);
+      if (!string.IsNullOrEmpty(cSoType))
+        filterString += string.Format(" and 销售类型='{0}' ", cSoType);
+
+      string startDate = this.dtpStart.Value.ToString("yyyy-MM-dd");
+      string endDate = this.dtpEnd.Value.ToString("yyyy-MM-dd");
+      filterString += string.Format(" and (单据日期 >= '{0}' and 单据日期<= '{1}')", startDate, endDate);
+
+      DataRow[] rows=this.originDataTable.Select(filterString);
+      DataTable table = this.originDataTable.Clone();
+      foreach (DataRow row in rows)
+      {
+        table.ImportRow(row);
+      }
+      this.dgvMain.DataSource = table;
     }
   }
 }
